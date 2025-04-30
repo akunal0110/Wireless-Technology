@@ -1,0 +1,62 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// LCD I2C Address (Agar 0x27 kaam na kare toh 0x3F try karo)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Pin Definitions
+const int fireSensor = 8;   // Fire sensor D0 → Pin 8
+const int smokeSensor = A0; // Smoke sensor A0 → A0
+const int buzzer = 9;       // Buzzer → Pin 9
+
+void setup() {
+    pinMode(fireSensor, INPUT);
+    pinMode(smokeSensor, INPUT);
+    pinMode(buzzer, OUTPUT);
+
+    lcd.init();          // Initialize LCD
+    lcd.backlight();     // Turn on LCD backlight
+
+    Serial.begin(9600);
+}
+
+void loop() {
+    int fireValue = digitalRead(fireSensor);  // Fire Sensor D0 output (0 or 1)
+    int smokeValue = analogRead(smokeSensor); // Smoke Sensor Analog Value
+
+    // Serial Monitor Debugging
+    Serial.print("Fire: ");
+    Serial.println(fireValue);
+    Serial.print("Smoke: ");
+    Serial.println(smokeValue);
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+
+    // 🔥 Fire Detection with Levels
+    if (fireValue == 0) {  // Fire Detected (LOW means fire present)
+        lcd.print("🔥 FIRE: HIGH!!!");
+        digitalWrite(buzzer, HIGH);  // Buzzer ON
+    } else {
+        lcd.print("Fire: Normal");
+        digitalWrite(buzzer, LOW);   // Buzzer OFF
+    }
+
+    // 💨 Smoke Detection with Levels
+    lcd.setCursor(0, 1);
+    if (smokeValue > 55) {  // HIGH Smoke Level
+        lcd.print("Smoke: HIGH ");
+        digitalWrite(buzzer, HIGH);  // Buzzer ON
+    } else if (smokeValue > 45) {  // MEDIUM Smoke Level
+        lcd.print("Smoke: MEDIUM");
+        digitalWrite(buzzer, LOW);  // Buzzer OFF
+    } else if (smokeValue > 25) {  // LOW Smoke Level
+        lcd.print("Smoke: LOW");
+        digitalWrite(buzzer, LOW);  // Buzzer OFF
+    } else {
+        lcd.print("Smoke: Normal");
+        digitalWrite(buzzer, LOW);
+    }
+
+    delay(1000); // Wait for 1 sec before next reading
+}
